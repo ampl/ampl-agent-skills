@@ -1,0 +1,20 @@
+{
+  "name": "ampl",
+  "displayName": "AMPL",
+  "version": "2.0.2",
+  "description": "AMPL modeling knowledge: write, debug, and explain AMPL models (.mod/.dat/.run), amplpy and ampls code, solver options, and LP/MIP/NLP formulation patterns.",
+  "author": {
+    "name": "AMPL Optimization Inc.",
+    "url": "https://ampl.com"
+  },
+  "homepage": "https://skill.ampl.com",
+  "repository": "https://github.com/ampl/ampl-agent-skills",
+  "license": "MIT",
+  "keywords": ["ampl", "optimization", "operations-research", "linear-programming", "mixed-integer-programming", "amplpy", "solvers"],
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://dev.ampl.com",
+  "supportUrl": "https://ampl.com/support",
+  "privacyPolicyUrl": "https://ampl.com/privacy-policy",
+  "termsOfServiceUrl": "https://ampl.com/terms",
+  "skills": ["./skill"]
+}

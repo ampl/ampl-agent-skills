@@ -1,0 +1,15 @@
+{
+  "name": "ampl",
+  "description": "Official AMPL agent skill for optimization modeling with AMPL, amplpy and ampls.",
+  "owner": {
+    "name": "AMPL Optimization Inc.",
+    "url": "https://ampl.com"
+  },
+  "plugins": [
+    {
+      "name": "ampl",
+      "source": "./",
+      "description": "AMPL modeling knowledge: write, debug, and explain AMPL models, amplpy and ampls code, and solver options."
+    }
+  ]
+}

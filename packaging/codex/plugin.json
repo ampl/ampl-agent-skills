@@ -1,0 +1,33 @@
+{
+  "name": "ampl",
+  "version": "2.0.2",
+  "description": "AMPL modeling knowledge: write, debug, and explain AMPL models, amplpy and ampls code, and solver options.",
+  "author": {
+    "name": "AMPL Optimization Inc.",
+    "url": "https://ampl.com"
+  },
+  "homepage": "https://skill.ampl.com",
+  "repository": "https://github.com/ampl/ampl-agent-skills",
+  "license": "MIT",
+  "keywords": ["ampl", "optimization", "operations-research", "linear-programming", "mixed-integer-programming", "amplpy"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AMPL",
+    "shortDescription": "Write and debug AMPL models",
+    "longDescription": "Gives Codex expert knowledge of AMPL, the algebraic modeling language for mathematical optimization. It helps you write, read, fix, and explain AMPL models (.mod, .dat, .run files), translate mathematical formulations into AMPL, choose modeling patterns for LP, MIP, network, piecewise-linear, nonlinear, and complementarity problems, write amplpy (Python API) and ampls (solver callback) code, tune solvers such as HiGHS, Gurobi, CPLEX, Xpress, and COPT, and diagnose infeasible, unbounded, or slow solves. The skill is reference content only: it does not run AMPL, call solvers, or send data anywhere.",
+    "developerName": "AMPL Optimization Inc.",
+    "category": "Coding",
+    "websiteURL": "https://ampl.com",
+    "supportURL": "https://ampl.com/support",
+    "privacyPolicyURL": "https://ampl.com/privacy-policy",
+    "termsOfServiceURL": "https://ampl.com/terms",
+    "brandColor": "#593EFF",
+    "logo": "./assets/icon.png",
+    "composerIcon": "./assets/icon.png",
+    "defaultPrompt": [
+      "Formulate this production planning problem as an AMPL model",
+      "Why is my AMPL model infeasible?",
+      "Convert this AMPL script to amplpy"
+    ]
+  }
+}

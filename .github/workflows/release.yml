@@ -20,6 +20,10 @@ jobs:
           version=$(grep -m1 -oP '^## \[\K[0-9]+\.[0-9]+\.[0-9]+(?=\])' skill/CHANGELOG.md)
           test -n "$version" || { echo "No version found in skill/CHANGELOG.md"; exit 1; }
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          for f in .claude-plugin/plugin.json packaging/codex/plugin.json; do
+            v=$(jq -r .version "$f")
+            test "$v" = "$version" || { echo "$f version $v does not match CHANGELOG $version"; exit 1; }
+          done
           if gh release view "v$version" > /dev/null 2>&1; then
             echo "Release v$version already exists; skipping."
             echo "exists=true" >> "$GITHUB_OUTPUT"
@@ -36,6 +40,7 @@ jobs:
           cp -r skill dist/ampl-skill
           (cd dist && zip -r "$name" ampl-skill)
           echo "path=dist/$name" >> "$GITHUB_OUTPUT"
+          echo "codex=$(packaging/build-codex-plugin.sh ${{ steps.version.outputs.tag }})" >> "$GITHUB_OUTPUT"
 
       - name: Create release
         if: steps.version.outputs.exists != 'true'
@@ -43,6 +48,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
           ZIP: ${{ steps.zip.outputs.path }}
+          CODEX_ZIP: ${{ steps.zip.outputs.codex }}
         run: |
-          gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "$TAG" \
+          gh release create "$TAG" "$ZIP" "$CODEX_ZIP" --target "$GITHUB_SHA" --title "$TAG" \
             --notes "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/$TAG/skill/CHANGELOG.md)."
