@@ -1,6 +1,6 @@
 # AMPL Options Reference
 
-Derived from: ampl-options.md
+Derived from: ampl-options.md, release-ampl-changelog.md
 
 Source: `raw/ampl-options.md` (`https://dev.ampl.com/ampl/reference/options.html`),
 current as of 2026-08-17. This file covers **core AMPL options** — the ones that govern
@@ -119,6 +119,7 @@ Govern `solve`/`write` and what's sent to the solver.
 | `show_write_files` | n (0) | 0=never report written filename, 1=only if set indirectly via `outopt`, 2=always |
 | `times` | b (0) | Detailed time/memory stats for major AMPL execution phases |
 | `gentimes` | b (0) | Detailed time/memory stats per model component (sets, params, vars, objs, cons) |
+| `times_file` | s ('') | File to which `times`/`gentimes` output is appended (since AMPL 20260723). Default `''` keeps it on stderr — except under APIs such as amplpy, where `times`/`gentimes` output is no longer sent to stderr and goes to this file |
 | `bad_subscripts` | n (3) | Max number of invalid index-combination errors reported |
 | `compl_warn` | n (1) | Warn on non-square complementarity systems; 0=off, 2=also treat as infeasible |
 | `strict_ineq_warn` | n (1) | How to handle `>`/`<` constraints: 1=warn + represent as logical constraint (default), 0=silent, 2=error + reject |

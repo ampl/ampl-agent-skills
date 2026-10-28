@@ -3,7 +3,7 @@
 Derived from: solvers-index.md
 
 Source: `raw/solvers-index.md` (`https://dev.ampl.com/solvers/index.html`), current as
-of 2026-08-17 — this file's capability matrix is now sourced from AMPL's own solver
+of 2026-10-28 — the capability matrix is sourced from AMPL's own solver
 capability tables rather than editorial guidance. The "Picking a starting point" section
 below remains practitioner synthesis layered on top of that sourced matrix, not itself
 drawn from the corpus — see `SKILL.md`'s "Known gaps" section. Treat this as a starting
@@ -28,7 +28,7 @@ solvers/solver options: `08-commands-modifying-models-and-data.md`,
 `../amplpy/core-workflow-best-practices.md`. For tuning a specific solver once chosen,
 see `../solver-options/`.
 
-## Linear-quadratic solvers, by problem class
+## Linear and mixed-integer solvers, by problem class
 
 | Solver | LP | MILP | QP | MIQP | Convex (MI)QCP | Non-convex (MI)QCP | Conic | (MI)NLP |
 |---|---|---|---|---|---|---|---|---|
@@ -38,14 +38,16 @@ see `../solver-options/`.
 | COPT | ✅ [GPU] | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (SOCP + exp. cones) | ≈ (local optimum) |
 | MOSEK | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ (SOCP + exp. cones) | ≈ (PL approx.) |
 | NVIDIA cuOpt | ✅ [GPU] | ✅ [GPU] | ❌ | ❌ | ❌ | ❌ | ❌ | ≈ (PL approx.) |
-| HiGHS | ✅ [GPU] | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ≈ (PL approx.) |
-| CBC | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ≈ (PL approx.) |
+| HiGHS | ✅ [GPU] | ✅ | ✅ | ❌ | ≈ (PL approx.) | ≈ (PL approx.) | ❌ | ≈ (PL approx.) |
+| CBC | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ≈ (PL approx.) |
 | SCIP | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| GCG | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| GCG | ✅ | ✅ | ≈ (PL approx.) | ≈ (PL approx.) | ≈ (PL approx.) | ≈ (PL approx.) | ❌ | ≈ (PL approx.) |
 
 "[GPU]" = GPU-accelerated algorithms available (e.g. PDLP for LP/MILP). "≈ (PL approx.)"
-means: for solvers not supporting (MI)NLP directly, piecewise-linear approximation is
-applied automatically (see `../mp-library/expressions-and-modeling-guide.md`). Conic
+means: quadratic or nonlinear terms the solver does not accept natively are approximated
+by piecewise-linear functions (see `../mp-library/expressions-and-modeling-guide.md`), so
+the solver optimizes the approximation. Which constructs each MP driver receives natively:
+`../mp-library/tools-troubleshooting-and-reformulation.md`. Conic
 support elsewhere in the "Conic" column is SOCP only (not exponential cones).
 
 ## Nonlinear solvers, by problem class
@@ -65,24 +67,41 @@ support elsewhere in the "Conic" column is SOCP only (not exponential cones).
 | BONMIN | ✅ | ✅ | ❌ |
 | COUENNE | ✅ | ✅ | ✅ |
 
-All nonlinear solvers above are reached through AMPL via the MP2NL meta-driver where
-they don't have a native MP interface (see
-`../mp-library/tools-troubleshooting-and-reformulation.md`). Global optimality: even
+MP's reformulations reach all nonlinear solvers above through the MP2NL meta-driver;
+Knitro, CONOPT and LINDO Global have it built in (option `mp2nl=1`), the others are called
+through `solver=mp2nl` (see `../mp-library/tools-troubleshooting-and-reformulation.md`). Global optimality: even
 solvers that accept integer variables (Knitro, Bonmin) only guarantee a *local* optimum
 on non-convex models unless listed as "Global optimum".
+
+## Constraint programming and complementarity solvers
+
+Constraint programming solvers search over integer variables by propagation and branching
+and receive logical and counting constraints directly. The same AMPL constructs are
+reformulated for MIP solvers by MP, so a CP model can also be solved by the MIP solvers
+above.
+
+| Solver | Logic and counting | `alldiff` | Integer arithmetic | Real functions | Continuous variables | MP-based |
+|---|---|---|---|---|---|---|
+| CP-SAT | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Gecode | ✅ | ✅ | ≈ (`*`, `div`, `mod`, `abs`, `min`, `max`; no `^`) | ❌ | ❌ | ❌ |
+| ILOG CP | ✅ | ✅ | ✅ | ✅ | ❌ (a linear model without logic is passed to CPLEX, option `optimizer`) | ❌ |
+
+**Complementarity:** PATH solves square complementarity problems (MCP). MP-based solvers
+also accept `complements` and reformulate it (`../modeling-patterns/complementarity-problems.md`).
 
 ## Quick lookup by problem class
 
 | Problem class | Solver(s) | Notes |
 |---|---|---|
 | LP / MIP (default starting point) | **HiGHS** (open-source) | Gurobi, CPLEX, COPT, Xpress (commercial) are faster on large/hard instances — reach for one of these if HiGHS is too slow or a license is already available |
-| QP / MIQP | HiGHS (LP + QP only), CBC | or any of the commercial LP/MIP solvers above, which also handle QP |
+| QP / MIQP | HiGHS (QP only, not MIQP) | MIQP: any of the commercial LP/MIP solvers above, or SCIP |
 | Convex QCP / SOCP / conic | **Mosek** or **COPT** (both support SOCP + exponential cones) | Gurobi, CPLEX, Xpress also handle convex QCP/SOCP (SOCP only, no exponential cones) |
-| Non-convex QCP | Gurobi, Xpress, COPT, SCIP, GCG | |
-| MINLP (mixed-integer nonlinear) | Gurobi (v12+), Xpress, SCIP, GCG, BARON, Bonmin, Couenne | |
+| Non-convex QCP | Gurobi, Xpress, COPT, SCIP | HiGHS and GCG only approximate it piecewise-linearly |
+| MINLP (mixed-integer nonlinear) | Gurobi (v12+), Xpress, SCIP, BARON, Bonmin, Couenne | linear-quadratic solvers (CPLEX, HiGHS, MOSEK, CBC, GCG, cuOpt) optimize a piecewise-linear approximation |
 | General NLP (continuous, smooth nonlinear) | **Knitro**, **Ipopt** (open-source) | CONOPT, SNOPT, MINOS, LGO, LOQO |
 | Global optimization (proven global optimum, non-convex) | BARON, LINDO Global, RAPOSa, Couenne, LGO | |
 | GPU-accelerated LP/MIP | NVIDIA **cuOpt** | or Gurobi/Xpress/COPT/HiGHS configured with GPU-acceleration options |
+| Constraint programming (integer, logic-heavy) | **CP-SAT** | Gecode, ILOG CP; or any MIP solver via MP's reformulation |
 
 ## Picking a starting point
 

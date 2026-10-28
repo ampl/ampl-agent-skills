@@ -113,7 +113,8 @@ cheap to evaluate, and the variable's name and value remain available afterward 
 `display` even though it never reaches the solver. Trade-off: substituting out variables
 means fewer variables/constraints but more complex expressions per constraint — solver
 performance can go either way, so treat it as something to experiment with rather than a
-default "always better" choice on a new nonlinear model.
+default "always better" choice on a new nonlinear model. (`nlp-formulation-choices.md`
+gives a decision list and a switch pattern for keeping both forms testable.)
 
 ## Writing smooth expressions: where `abs`/`if`/`min`/`max` silently misbehave
 
@@ -233,6 +234,10 @@ Practical responses, roughly in order of effort:
 
 ## See also
 
+- When to substitute (reduced space) and when to keep a named variable (full space),
+  coordinate choice and problem class, redundant convex constraints on lifted
+  quantities, starting points and smoothing, with measured trade-offs:
+  `nlp-formulation-choices.md`
 - Piecewise-linear alternatives when a nonlinear cost can be adequately approximated by a
   handful of linear segments (often easier to solve reliably): `piecewise-linear-programs.md`
 - Network models whose flow/pressure relationships become genuinely nonlinear (gas,

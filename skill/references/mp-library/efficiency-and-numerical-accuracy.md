@@ -13,7 +13,10 @@ both. Future MP versions may automate more of these reformulations; for now, app
 by hand is worthwhile on models where solve time or accuracy is a concern. For a general
 treatment beyond these MP-specific points, see E. Klotz and A.M. Newman (2013), "Practical
 guidelines for solving difficult mixed integer linear programs," *Surveys in Operations
-Research and Management Science* 18(1-2), 18-32.
+Research and Management Science* 18(1-2), 18-32. Choosing between whole formulations of a
+model (hand-written big-M, indicators, known reformulations, root-bound checks) is covered
+in `../modeling-patterns/choosing-formulations.md`, which is the single home for that
+material; this file keeps MP's efficiency and numerics points.
 
 ## Efficiency
 
@@ -96,6 +99,32 @@ minimize Goldstein_Price:
 
 This is observed to substantially improve Gurobi's performance on this model.
 
+### Declared bounds set the big-M constants
+
+When MP linearizes a logical constraint, it takes the big-M constant from the **declared
+bounds of the variables in the constraint**, propagated through the expression — not from
+bounds implied by other constraints. Name a sum or difference and declare the bound that
+follows from the data:
+
+```ampl
+# Loose: the only bound MP can derive for the sum is the total demand
+subject to Use {i in I}: Open[i] = 0 ==> sum {j in J} Ship[i,j] <= 0;
+
+# Tight
+var Out {i in I} >= 0, <= cap[i];
+subject to Out_Def {i in I}: Out[i] = sum {j in J} Ship[i,j];
+subject to Use {i in I}: Open[i] = 0 ==> Out[i] <= 0;
+```
+
+MP then linearizes `Use` as `Out[i] <= cap[i]*Open[i]`; on a small facility-location
+instance this reduced the root gap from 32.5 % to 8.7 %. A constraint on a **single
+variable** is a bound in disguise (presolve turns it into one); a constraint on an
+**expression** is not, and does not reach the big-M sizing. A variable with no finite
+bound in a logical constraint stops the solve with "Set bounds on variables participating
+in logical expressions". More cases, corollaries and measurements:
+`../modeling-patterns/choosing-formulations.md` ("Declared bounds decide the big-M
+constants").
+
 ## Numerical accuracy
 
 Solvers work in finite precision, so numerical stability is a real concern independent of
@@ -111,7 +140,11 @@ matters more once MP is auto-generating additional constraints during reformulat
 
 MP simplifies relational operators (`==>`, indicator-style conditions) into "indicator"
 constraints where possible. Solvers with native indicator-constraint support usually
-handle these in a numerically stable way. Where a solver lacks that support, MP has to
+handle these in a numerically stable way. This is about numerical stability, not speed: a
+big-M row with a tight constant contributes LP relaxation strength that a native indicator
+may not, so an indicator formulation is not automatically faster
+(`../modeling-patterns/choosing-formulations.md`, "An indicator constraint is not a
+strictly better big-M row"). Where a solver lacks that support, MP has to
 linearize the indicator using a "big-M" constant instead — for example,
 
 ```ampl
@@ -126,8 +159,9 @@ x <= upper_bound(x) * b;
 
 with the big-M taken from `x`'s upper bound. This linearization also gets used for the
 MIP's continuous relaxation, so it affects solving speed as well as just the final answer.
-**Big-M constraints require finite bounds on every participating variable** — and those
-bounds should be as tight as possible, ideally within ±10⁴. In any case, for numerical
+**Big-M constraints require finite bounds on every participating variable** — the
+*declared* bounds, propagated through the expressions (see "Declared bounds set the big-M
+constants" above) — and those bounds should be as tight as possible, ideally within ±10⁴. In any case, for numerical
 stability they should never exceed the reciprocal of the integrality tolerance
 (`inttol`). A default big-M can be set with `cvt:bigM` (use cautiously — a default that's
 too loose defeats the purpose, but the right value is model-dependent).
@@ -148,6 +182,22 @@ subject to setDL {l in Lset, s in Sset}:
    DL[l,s] = if L[l,s] > K[l,s] then L[l,s];
 ```
 
+### Counting changes of a continuous variable
+
+A variable declared in a finite set (`var A {T} in TAPS`) is still continuous for the
+solver, returned only up to its feasibility tolerance: two periods at the same value can
+come back as `1.025` and `1.0249994`, and `A[t] != A[t-1]` then counts a change that did
+not happen. Compare the move with half a step of the value ladder instead:
+
+```ampl
+# not this
+subject to Few_Moves: atmost N {t in T: t > 1} (A[t] != A[t-1]);
+# but this: real moves are at least one step, noise is ~1e-6
+subject to Few_Moves: atmost N {t in T: t > 1} (abs(A[t] - A[t-1]) >= step/2);
+```
+
+`!=` is safe on variables declared `integer`.
+
 ### Piecewise-linear functions and stability
 
 Piecewise-linear expressions — whether written directly with `<<...>>` or arising from an
@@ -155,13 +205,22 @@ approximation of another nonlinear function (`expressions-and-modeling-guide.md`
 nonlinear functions") — are numerically stable when the solver handles them with a native
 PL algorithm. When they're linearized instead, bound the argument and result variables
 within ±10⁴ (tighter is better). For approximated nonlinear functions specifically, MP
-imposes hard bounds of up to ±10⁶ by default if none are given. Where stability is still a
+imposes hard bounds of up to ±10⁶ by default if none are given. The MIP linearization of a
+nonconvex PL expression via SOS2 constraints needs finite bounds on the argument: an
+unbounded argument is an error unless a limit is set with `cvt:pl:domain` (use with
+caution — the solver's feasibility tolerance is amplified by up to this value). With
+native SOS2 support in the solver, unbounded sides of the argument are modeled exactly by
+ray variables. Where stability is still a
 problem after tightening bounds, further options include lowering the integrality
 tolerance, Gurobi's `numfocus`/`intfocus` options, and disabling the solver's own presolve
 — tuning measures, applied case by case rather than as a first resort.
 
 ## See also
 
+- `../modeling-patterns/choosing-formulations.md` — the single home for choosing between
+  formulations: declared bounds and big-M sizing in depth, indicators vs. big-M, logic and
+  the relaxation, known formulations, and cheap checks (root bound, exported model) before
+  a benchmark
 - `expressions-and-modeling-guide.md` — the operators (`<<...>>`, `==>`, general
   nonlinear functions) whose reformulation these bounds and tolerances directly affect
 - `tools-troubleshooting-and-reformulation.md` — `acc:` acceptance options, exporting the

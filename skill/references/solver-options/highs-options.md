@@ -3,7 +3,7 @@
 Derived from: highs-mp-options.md
 
 Source: `raw/highs-mp-options.md` (`https://dev.ampl.com/solvers/highs/options.html`),
-current as of 2026-08-17. HiGHS only has an MP-interface driver (no separate ASL
+current as of 2026-10-28 (248 options). Many options now have short names; the longer names used below are still accepted as aliases. HiGHS only has an MP-interface driver (no separate ASL
 variant), so this is the only source. **This is a curated subset of commonly-tuned
 options** — the handful a practitioner actually reaches for, not the full reference; see
 the raw source or the URL above for the complete list.
@@ -47,7 +47,7 @@ below by hand.
 | `lim:nodes` (`nodelim`) | Max. branch-and-bound nodes explored |
 | `lim:leavenodes` (`leaveslim`) | Max. number of leaf nodes |
 | `lim:stallnodes` (`stallnodelim`) | Max. nodes whose bound estimate stays above the cutoff (a node-count-based stall limit) |
-| `lim:improvingsols` (`improvingsolslimit`) | Stop after this many improving solutions found |
+| `lim:sol` (`sollim`, old `lim:improvingsols`) | Stop after this many improving solutions found |
 | `lim:objectivetarget` (`objectivetarget`) | Stop once the MIP search reaches this objective value ("good enough, stop now") |
 
 HiGHS additionally has a genuine time-based **plateau stop**, the `mip:plateau:*`
@@ -56,10 +56,12 @@ family: `mip:plateau:time` stops the search if the incumbent (and, if
 least `mip:plateau:abstol`/`mip:plateau:reltol` for this many seconds.
 `mip:plateau:warmup` gives a grace period before the timer starts checking, and
 `mip:plateau:log` prints plateau status. This is the "stop once progress has stalled"
-knob to reach for instead of a hard time limit.
+knob to reach for instead of a hard time limit. `abstol` and `reltol` combine with OR and
+`abstol` defaults to 0 (any change counts), so set `abstol` too when using `reltol`
+(`../mp-library/feature-and-solver-options-guide.md`).
 
 ```ampl
-option highs_options 'timelim=300 mip:gap=0.01 mip:plateau:time=60 mip:plateau:reltol=1e-4';
+option highs_options 'timelim=300 mip:gap=0.01 mip:plateau:time=60 mip:plateau:abstol=1e-6 mip:plateau:reltol=1e-4';
 ```
 
 ## Variable/branch selection
@@ -83,7 +85,7 @@ option highs_options 'mip:heureff=0.2';   # spend more effort on heuristics
 (`dualfeastol`, default 1e-7) are the primal/dual feasibility tolerances;
 `mip:intfeastol` (`intfeastol`, default 1e-6) is the integer feasibility
 tolerance — loosen cautiously if a model is chronically declared infeasible on marginal
-violations. `alg:kkt_tolerance` (`kkttol`, default 1e-7) and `alg:ipmopttol`
+violations. `alg:kkttol` (`kkttol`, old `alg:kkt_tolerance`, default 1e-7; if changed, it overrides all the individual feasibility/optimality tolerances) and `alg:ipmopttol`
 (`ipmopttol`, default 1e-8) govern the interior-point method's stopping
 tolerance. `alg:simplexscale` (`simplexscale`) controls problem scaling for
 the simplex solver: 0 off, 1 automatic (default), 2 equilibration, 3 forced
@@ -97,12 +99,10 @@ option highs_options 'alg:simplexscale=2 mip:intfeastol=1e-7';
 
 ## Cuts
 
-**Not available / not exposed.** The raw option dump has no `cut:`-prefixed family at
-all — HiGHS's MIP solver generates cuts internally with no per-family AMPL-level
-controls to enable, disable, or tune aggressiveness (contrast with CPLEX/Gurobi's
-`cut:cuts` and per-family knobs). `mip:poolsoftlimit` (`poolsoftlimit`, default
-10000) is the closest adjacent knob — a soft cap on the cut pool's row count for dynamic
-aging, not a cut-generation aggressiveness control.
+**No per-family cut controls.** The option dump has no `cut:` family — HiGHS's MIP solver
+generates cuts internally. The adjacent knobs are `mip:nodecuts` (`nodecuts`, 0/1, default
+1: whether cuts are separated at nodes other than the root) and `mip:poolsoftlimit`
+(`poolsoftlimit`, default 10000: a soft cap on the cut pool's row count for dynamic aging).
 
 ## Concurrent and algorithm selection
 
@@ -121,6 +121,21 @@ presolve artifact.
 ```ampl
 option highs_options 'method=ipm parallel=on';
 ```
+
+## New in the October 2026 option list
+
+- **Infeasibility tools:** `iis:find` (`iis`), `alg:feasrelax` with `alg:lbpen`/`ubpen`/
+  `rhspen`, and `lim:iistime` — HiGHS now appears with IIS and feasibility relaxation in
+  the MP support table.
+- **Sensitivity and fixed model:** `alg:sens`; `mip:basis` (emulated fixed-model solve,
+  with `mip:basis:timelimit`/`iterlimit`).
+- **MIP heuristics:** `mip:heur:feasjump`, `mip:heur:rens`, `mip:heur:rins`,
+  `mip:heur:rootredcost`, `mip:heur:shifting`, `mip:heur:ziround` (0/1 each).
+- **Iteration limits renamed:** `lim:iter` (simplex), `bar:iterlim` (IPM), `lim:pdlpiter`,
+  `lim:qpiter` — old long names kept as aliases.
+- `alg:method=hipo` (HiPO interior point) is not available in every HiGHS build and is
+  rejected with a message if missing.
+- **Removed:** `obj:blend` (use MP's `obj:multi`, `../mp-library/multi-objective-optimization.md`).
 
 ## See also
 

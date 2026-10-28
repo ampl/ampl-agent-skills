@@ -1,6 +1,6 @@
 # Cross-Language API Equivalents
 
-Derived from: basic-commands.md, basic-scripting.md, modeling-and-data.md
+Derived from: basic-commands.md, basic-scripting.md, modeling-and-data.md, ampl-apis.md
 
 Source: `basic-commands.md`, `basic-scripting.md`, `modeling-and-data.md` (syntax
 tables embedded in AMPL's official tutorial series, covering AMPL-interactive, Python,
@@ -14,7 +14,7 @@ for translating between them, useful when porting a script from one language to 
 or when reading example code in an unfamiliar target language. Method names differ mainly
 in casing convention (each language's own idiom), not in concept or argument order.
 
-**Caveat on source reliability**: the raw source for this table was a NotebookLM export
+**Caveat on source reliability**: the source for this table was an export
 that flattened originally-tabbed, per-language code panels into a single run of text; the
 language attribution for a few ambiguous lines (marked below) had to be inferred
 heuristically rather than read directly off an explicit label. Treat the "ambiguous"
@@ -89,6 +89,20 @@ The shapes differ (Python: nested iteration over entity → instance; R: a `data
 per entity, modify-then-write-back) but the underlying operation — read all instance
 values, transform, write back — is the same across languages. Full method reference for
 the Python side: `../amplpy/api-reference-classes.md`.
+
+## Installing each API, and where its documentation is
+
+From the AMPL APIs page (`ampl-apis.md`):
+
+| Language | Install | Documentation |
+|---|---|---|
+| Python (`amplpy`) | `python -m pip install amplpy` | https://amplpy.ampl.com/ |
+| R (`rAMPL`) | `install.packages("Rcpp", type="source")`, then `install.packages("https://ampl.com/dl/API/rAMPL.tar.gz", repos=NULL)` | https://rAMPL.ampl.com/ |
+| C#, C++, C, Java, MATLAB | one API bundle per platform from the AMPL Portal: `https://portal.ampl.com/dl/modules/amplapi-module.<platform>.<ext>` (`mswin64.zip`, `linux64.tgz`, `macos64.tgz`) | https://ampl.com/api/latest/dotnet/, `/cpp/`, `/c/`, `/java/`, `/matlab/` |
+| Solver callbacks (`ampls`) | see `../ampls/usage-and-quickstart.md` | https://ampls.ampl.com/, GitHub `ampl/ampls-api` |
+
+The C API is listed alongside the others but has no column in the tables above (the
+tutorial sources show no C examples).
 
 ## See also
 

@@ -5,7 +5,7 @@ Derived from: gurobi-mp-options.md, gurobi-asl-options.md
 Source: `raw/gurobi-mp-options.md` (`https://dev.ampl.com/solvers/gurobi/options.html`,
 MP-interface names — the recommended interface, ~362 top-level options) and
 `raw/gurobi-asl-options.md` (`https://dev.ampl.com/solvers/gurobi/gurobiasl.html`,
-legacy ASL-interface names), current as of 2026-08-17. **This is a curated subset of
+legacy ASL-interface names), current as of 2026-10-28. **This is a curated subset of
 commonly-tuned options** — the handful a practitioner actually reaches for, not the full
 reference. See the raw sources or the URLs above for the complete list. Option names
 below use the MP-interface (`gurobi_options`) form; the older flat ASL names
@@ -42,8 +42,8 @@ Gurobi has a built-in automatic parameter search, invoked from AMPL via
 `tech:tunebase`: give it a base filename and Gurobi searches for a better parameter
 set than the defaults, writing results to `<base>_1.prm`, `<base>_2.prm`, ... (best
 first) — reapply the winning set in a later solve with `tech:param:read=...`. Related
-knobs: `tech:tunetimelim` (time budget, default: automatic), `tech:tunetrials` (trials
-per candidate set, default 3), `tech:tuneoutput` (verbosity while tuning),
+knobs: `tech:tunetimelim` (time budget, default 86400 s), `tech:tunetrials` (trials
+per candidate set, default 0 = automatic), `tech:tuneoutput` (verbosity while tuning),
 `tech:tunejobs`/`tech:tunedynamicjobs` (distribute tuning across parallel
 workers/machines).
 
@@ -132,6 +132,24 @@ distributed worker pool.
 ```ampl
 option gurobi_options 'alg:method=2 pre:solve=0';   # force barrier, no presolve
 ```
+
+## Changes in the October 2026 option list
+
+- **`lim:mem` and `lim:softmem` are now in GB, not MB.** `lim:mem` is a hard limit (the
+  solution cannot be retrieved if hit); prefer `lim:softmem` (default: no limit).
+- `lim:sol`: since Gurobi 14, value 1 no longer triggers additional feasibility
+  heuristics; use `mip:focus=1` for that.
+- `pre:funcpieces`, `pre:funcpiecelength`, `pre:funcpieceerror`, `pre:funcpieceratio` are
+  **deprecated by Gurobi** together with function constraints; nonlinear functions go to
+  Gurobi as expression trees (`../mp-library/expressions-and-modeling-guide.md`).
+- New: the `mip:plateau:*` plateau-stop family, `mip:basis:timelimit`/`iterlimit`,
+  `obj:multi:stats`, `obj:multi:inheritparams`, tuning options (`tech:tunecriterion`,
+  `tech:tunemetric`, `tech:tunetargetmipgap`, `tech:tunetargettime`, …), cuts
+  `cut:psd`, `cut:strongcg`, `cut:liftproject`, `cut:dualimplied`, `cut:projimplied`.
+- Changed defaults: `tech:tunetimelim` 86400 s (was automatic); `tech:tunetrials` 0 =
+  automatic (was 3); `bar:crossoverbasis` gains -1 automatic (default); `alg:pdhggpu`
+  requires `alg:method=6` and a GPU-enabled build; `iis:method` values redefined (0
+  filtering-based, 1 faster LP-based, 2 filtering ignoring bounds).
 
 ## See also
 

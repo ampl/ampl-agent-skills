@@ -3,8 +3,8 @@
 Derived from: copt-mp-options.md
 
 Source: `raw/copt-mp-options.md` (`https://dev.ampl.com/solvers/copt/options.html`),
-current as of 2026-08-17. COPT only has an MP-interface driver (no separate ASL
-variant), so this file is drawn from a single source (227 top-level options). **This is
+current as of 2026-10-28 (274 options). COPT only has an MP-interface driver (no separate ASL
+variant), so this file is drawn from a single source. **This is
 a curated subset of commonly-tuned options** — the handful a practitioner actually
 reaches for, not the full reference. See the raw source or the URL above for the
 complete list.
@@ -33,11 +33,23 @@ option copt_options 'outlev=1';
 
 ## Autotuner
 
-**Not available.** Unlike Gurobi, the COPT MP option reference has no `tune:`/`tech:tune*`
-family or equivalent automatic parameter-search feature — nothing resembling
-`tech:tunebase` was found in the raw source. Parameter selection for COPT is manual;
-the categories below (MIP strategy levels, cut levels, algorithm choice) are the
-practical substitute.
+**Recent addition**: not in the COPT driver's option list before October 2026 (on an older install, check `copt -=`). Tuning runs
+only when `tech:tunebase` is given: results go to `<tunebase>_1_.par`, `_2_`, … (`_1_` is
+the best set, and the solve results returned are for it); apply them in a later solve with
+`tech:optionnativeread=...`.
+
+| Option | Effect |
+|---|---|
+| `tech:tunebase` | base name for the tuning result files; enables tuning |
+| `tech:tunemethod` | -1 automatic, 0 greedy search, 1 broader search |
+| `tech:tunemode` | criterion: -1 automatic, 0 solving time, 1 gap reached, 2 objective value, 3 objective bound |
+| `tech:tunetimelim` (`lim:tunetime`) | time limit on tuning (default 0 = chosen by COPT) |
+| `tech:tunemeasure` | aggregate over permutations: 0 average, 1 maximum |
+| `tech:tunetargettime`, `tech:tunetargetrelgap` | stop tuning once a set reaches this time (default 0.01 s) / gap (default 1e-4) |
+
+```ampl
+option copt_options 'tunebase=copt_tuned tunetimelim=600';
+```
 
 ## MIP stopping criteria
 
@@ -112,6 +124,20 @@ lets COPT solve the dual formulation instead of the primal when that's advantage
 ```ampl
 option copt_options 'alg:method=4 pre:solve=0';   # concurrent simplex+barrier, no presolve
 ```
+
+## Also new in the October 2026 option list
+
+- `tech:seed` (COPT parameter RandSeed, default -1) — for repeated runs with different
+  seeds (`../benchmarking-and-validation.md`).
+- `alg:sens` — sensitivity ranges (suffixes as in the MP feature guide; disable AMPL
+  presolve for easiest interpretation).
+- `mip:basis` — fixed-model solve, emulated (`mip:basis:timelimit`/`iterlimit`; COPT uses
+  simplex by default, an explicit iteration limit selects barrier with crossover).
+- `mip:lazy` — lazy constraints (`.lazy > 0`) and user cuts (`.lazy < 0`).
+- Solution pool: `sol:poollimit` (default 10), `sol:poolgap`, `sol:poolgapabs`,
+  `sol:poolmode`. COPT reports only the solutions found during the search and cannot look
+  for more, so all `sol:poolmode` values behave alike.
+- `lim:nlpiterlimit` now defaults to 10000; `pre:solve` gains value 4 (no limitations).
 
 ## See also
 

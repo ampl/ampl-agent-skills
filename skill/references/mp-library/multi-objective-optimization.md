@@ -69,6 +69,12 @@ before relying on exact tolerance semantics for a specific solver.
 **Objectives sharing the same priority are blended together** within that tier — priority
 groups the objective list, it doesn't uniquely order every objective.
 
+## Nonlinear multiple objectives
+
+In native mode (`obj:multi=1`), many solvers only accept linear objectives. To use it with
+nonlinear objectives, set `cvt:nlobj=0 cvt:quadobj=0`, which moves nonlinear terms into
+constraints.
+
 ## Per-objective solver options
 
 Declare a suffix named `option_<optionname>` to set a solver option's value per objective
@@ -112,6 +118,37 @@ for the same option — every objective in a blended group must either share an 
 option value or leave it unset. In the example above, `total_cost[3]` and `total_number`
 end up in the same blended group (same priority); there's no conflict because
 `option_timelimit` is 30 for both, and `option_mipgap` is only set on `total_cost[3]`.
+
+## Multi-objective solve statistics (experimental)
+
+With option `obj:multi:stats=1`, these suffixes are available after a multi-objective
+solve:
+
+- `.objpass` — the index of the optimization pass where this objective was optimized (0
+  if not optimized because of a time limit, infeasibility, etc. in earlier passes);
+- `.objpass_result` — the `solve_result_num` of that pass, -1 if not optimized;
+- `.objpass_runtime`, `_mipgap`, `_objval`, `_objbound`, `_work`, `_itercount`,
+  `_nodecount`, `_opennodecount` — statistics of that pass, where the solver provides them.
+
+Objectives blended into the same pass get the same values. Where they come from:
+
+- **Gurobi native** (`obj:multi=1`): as in Gurobi's multi-objective attributes.
+- **CPLEX native**: from CPLEX's per-subproblem information — `.objpass_work` is
+  deterministic time in ticks; `.objpass_mipgap` is computed from objective and best bound
+  (NaN for continuous passes, where CPLEX reports no bound).
+- **Other solvers with native multi-objective support** provide no pass statistics; use
+  `obj:multi=2` to get them from MP's emulation.
+- **MP's emulation** (`obj:multi=2`, or `obj:multi=1` for solvers without native support):
+  `.objpass_objval`/`.objpass_objbound` refer to the *pass* objective (e.g. a minimization
+  objective's value is negated if the first objective is maximized — evaluate the original
+  objectives as usual after the solve); `.objpass_runtime` is wall-clock time of the pass
+  including model changes and solution retrieval between passes; statistics not available
+  for a pass, including passes not run, are NaN.
+
+In all modes the pass objective is the weighted sum of that priority level's objectives,
+optimized in the sense of the first objective. With the default `obj:multi:weight=2`, the
+weight of an objective of the opposite sense is negated; with `obj:multi:weight=1`, the
+weights are applied as given.
 
 ## See also
 

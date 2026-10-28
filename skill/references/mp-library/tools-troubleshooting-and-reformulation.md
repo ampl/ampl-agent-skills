@@ -1,6 +1,6 @@
 # Tools, Troubleshooting, and Reformulation
 
-Derived from: mp-tools-and-details.md, mp-troubleshooting.md
+Derived from: mp-tools-and-details.md, mp-troubleshooting.md, mp2nl-mp-options.md
 
 Source: `mp-tools-and-details.md` (`https://mp.ampl.com/modeling-tools.html`),
 `mp-troubleshooting.md` (`https://mp.ampl.com/modeling-troublesh.html`).
@@ -28,8 +28,8 @@ s.t. NLConstraint1: 2*x + 4*exp(16 - 2*sin(x + y^2)) <= 19;
 
 with `exp(16 - 2*sin(x + y^2))` submitted intact rather than broken into auxiliary pieces.
 Expression trees generally give better performance and numerical precision when the
-solver supports them — SCIP 9.1.1 and Gurobi 12 are current examples of MP solvers that
-do.
+solver supports them. MP solvers accepting expression trees include Gurobi, Xpress and
+SCIP (by default) and COPT (with `acc:_expr=1`).
 
 ### Acceptance options (`acc:...`)
 
@@ -53,48 +53,70 @@ preferred; `3` accepted as an expression but redefinition preferred where possib
 accepted as an expression and preferred. `acc:_expr=1` corresponds to value 4 in the
 per-construct scale; `acc:_expr=0` corresponds to value 2 or 0.
 
-To see which constructs a given solver natively accepts, either run it with the `-=acc`
-switch (e.g. `gurobi -=acc`, which lists every `acc:`-prefixed option) or check that
-solver's option page at AMPL Development (`https://dev.ampl.com/solvers/index.html`).
+To see which constructs a given solver natively accepts, run it with the `-=acc:` switch
+(e.g. `gurobi -=acc:`, which lists every `acc:`-prefixed option with its default), see the
+table below, or check the Features section of that solver's page at AMPL Development
+(`https://dev.ampl.com/solvers/index.html`).
 
-### Full constraint list (`-c` switch)
+### Native constraints and expressions by driver (`-c` switch)
 
-Running a solver executable with `-c` lists every constraint type the MP model converter
-knows about, including internal ones — useful for reading solution-check warnings (below)
-or Reformulation Explorer output. Abbreviated reference (ID → full name):
+Running a solver executable with `-c` lists every constraint and expression type MP knows
+and the driver's default acceptance level; `<solver> -=acc:` lists the options that change
+it. The MP documentation tabulates these for the MP-based drivers (driver releases
+20261101; CBC 20250814 — an installed driver may differ). Condensed, **which drivers
+receive each construct natively** (everything else gets MP's reformulation):
 
-| ID | Full name | ID | Full name |
-|---|---|---|---|
-| `abs` | AbsConstraint | `lin(le/eq/ge)` | Linear constraint |
-| `acos`/`acosh` | Acos/AcoshConstraint | `linrange` | Linear range constraint |
-| `alldiff` | AllDiffConstraint | `linfunccon` | LinearFunctionalConstraint |
-| `and` | AndConstraint | `log`/`loga` | Log/LogAConstraint |
-| `asin`/`asinh` | Asin/AsinhConstraint | `max`/`min` | Max/MinConstraint |
-| `atan`/`atanh` | Atan/AtanhConstraint | `not` | NotConstraint |
-| `compl`/`complquad` | Complementarity (linear/quadratic) | `numberofconst`/`numberofvar` | NumberofConst/VarConstraint |
-| `condlin(lt/le/eq/ge/gt)` | Conditional linear constraint | `or` | OrConstraint |
-| `condquad(lt/le/eq/ge/gt)` | Conditional quadratic constraint | `pl` | PLConstraint |
-| `cos`/`cosh` | Cos/CoshConstraint | `pow` | PowConstraint |
-| `count` | CountConstraint | `powercone` | PowerConeConstraint |
-| `div` | DivConstraint | `quad(le/eq/ge)` | Quadratic constraint |
-| `exp`/`expa` | Exp/ExpAConstraint | `quadrange` | Quadratic range constraint |
-| `expcone` | ExponentialConeConstraint | `quadcone` | QuadraticConeConstraint |
-| `geomcone` | GeometricConeConstraint | `quadfunccon` | QuadraticFunctionalConstraint |
-| `ifthen` | IfThenConstraint | `rotatedquadcone` | RotatedQuadraticConeConstraint |
-| `impl` | ImplicationConstraint | `sos1`/`sos2` | SOS1/SOS2Constraint |
-| `ind(le/eq/ge)` | Linear indicator constraint | `sin`/`sinh` | Sin/SinhConstraint |
-| `indquad(le/eq/ge)` | Quadratic indicator constraint | `tan`/`tanh` | Tan/TanhConstraint |
+| Construct (option) | Received natively by |
+|---|---|
+| `and`/`forall`, `or`/`exists` (`acc:and`, `acc:or`) | Gurobi, Xpress, SCIP, CP-SAT |
+| `==>` … `else`, `if-then-else` (`acc:impl`, `acc:ifthen`) | CP-SAT |
+| binary `==>` linear — indicator (`acc:indeq`) | Gurobi, Xpress, CPLEX, COPT, MOSEK, SCIP, CP-SAT |
+| `alldiff`, `count`/`atmost`/…, `numberof` | CP-SAT |
+| `<<breakpoints; slopes>>` (`acc:pl`) | Gurobi, Xpress, CPLEX |
+| `min`, `max` | Gurobi, Xpress, CP-SAT |
+| `abs` | Gurobi, Xpress, SCIP, CP-SAT; COPT inside expressions |
+| SOS1 suffixes `.sosno`/`.ref` (`acc:sos1`) | Gurobi, Xpress, CPLEX, COPT, SCIP, CBC |
+| `x*y`, `div`, `mod` (`acc:mul`, `acc:intdiv`, `acc:mod`) | CP-SAT; `floor`/`ceil`/`round`: none |
+| quadratic constraints (`acc:quadle`) | Gurobi, Xpress, CPLEX, COPT, MOSEK, SCIP, BARONMP |
+| second-order / rotated / exponential cones | COPT, MOSEK (SCIP accepts SOC, reformulation preferred) |
+| `exp`, `log`, `expr^const` | Gurobi, Xpress, SCIP, BARONMP; COPT inside expressions; CP-SAT for `expr^const` |
+| `sin`, `cos` (`tan`) | Gurobi, Xpress, SCIP (not `tan`); COPT inside expressions |
+| `complements` (`acc:compl`) | none of the MP drivers (MP reformulates; see MP2NL below) |
+| `lb <= linear <= ub` (`acc:linrange`) | COPT, MOSEK, HiGHS, SCIP, GCG, CBC, CP-SAT, BARONMP |
+
+Among constraints, HiGHS, GCG, CBC and cuOpt receive only linear ones (plus SOS1 for CBC);
+everything else is reformulated or approximated for them (quadratic *objectives* are a
+separate matter — see `../core-language/13-solver-selection-guide.md`). Native acceptance does not imply faster
+solving: to compare, switch the reformulation on or off with the construct's option (e.g.
+`acc:or=0`). For MP2NL, acceptance depends on the subsolver. The type IDs that `-c` prints
+(`abs`, `ifthen`, `ind(le/eq/ge)`, `pow`, …) are the names used in solution-check warnings
+below (`expr '_pow'`, `expr '_ifthen'`).
 
 ## Exporting the solver's model
 
 To see exactly what MP and the solver did with a model, export it (and, where the solver
 supports it, its presolved form):
 
+```python
+solver = "gurobi"                          # any MP solver
+ampl.option[solver + "_auxfiles"] = "rc"   # pass AMPL names to the solver
+ampl.solve(solver=solver, mp_options="writeprob=disj.lp")
+```
+
 ```ampl
 option gurobi_options 'writeprob=disj.lp writepresolved=disj_pre.lp';
 option gurobi_auxfiles rc;     ## use var/con names in the export
 solve;
 ```
+
+Names appear where the solver's export format keeps them (the HiGHS LP export, for
+example, uses generic names). In the exported model, the rows MP generated for a logical
+constraint show the constants it used: for an implication linearized with big-M, the
+coefficient of the binary is `-M` — compare it with what the data allows
+(`efficiency-and-numerical-accuracy.md`, "Declared bounds set the big-M constants"). The
+four checks to run before benchmarking a reformulation (does the construct bind, compare
+root bounds, read what the solver receives, which solvers can solve the reference) are in
+`../modeling-patterns/choosing-formulations.md` ("Cheap checks before a benchmark").
 
 Format is solver-dependent (determined by the file extension). For Mosek, an equivalent
 example:
@@ -182,7 +204,8 @@ which named entity it occurred in. A `*` prefix marks a "realistic" violation (c
 using the solver's own auxiliary-variable values); unmarked rows are "idealistic." If
 `MaxRel` is blank, the constraint's right-hand side is 0 (relative violation isn't
 well-defined) — judge significance from the coefficients and variable values instead. Use
-`_pow`/`_ifthen`/etc. names from the "Full constraint list" table above to identify which
+`_pow`/`_ifthen`/etc. type IDs (printed by `-c`, see "Native constraints and expressions
+by driver" above) to identify which
 expression type is implicated, and the Reformulation Explorer to find *which* instance of
 that expression in the original model.
 
@@ -211,12 +234,12 @@ directly, but even smooth-NLP solvers like Ipopt can gain from MP2NL's automatic
 reformulation of complementarity constraints or convex piecewise-linear expressions that
 they wouldn't otherwise accept.
 
-Some nonlinear solvers (Knitro, Baron, Conopt) and the legacy ASL drivers (`gurobiasl`,
-`cplexasl`, `xpressasl`) support `mp2nl=1` as a direct option:
+Some nonlinear solvers (Knitro, BARON, CONOPT, LINDO Global) and the legacy ASL drivers
+(`gurobiasl`, `cplexasl`, `xpressasl`) have the bridge built in (`mp2nl=1`):
 
 ```ampl
-option knitro_options 'soltype=1 mp2nl=1';
-solve;
+option knitro_options 'mp2nl=1 outlev=1';
+option solver knitro; solve;
 ```
 
 For any other solver, invoke `mp2nl` explicitly as the solver:
@@ -227,7 +250,58 @@ ampl.solve(solver='mp2nl',
            mp2nl_options='solver=ipopt cvt:compl=2 cvt:compl:eps=1e-8')
 ```
 
+Enable the bridge whenever the model uses MP's expressions, including `==>` indicator
+syntax: a solver that does not understand a construct may misread the model without an
+error message.
+
+### Where the options go
+
+- `mp2nl_options`: MP's options. `solver=` (the subsolver), `cvt:...`, `acc:...`,
+  `sol:chk:...`, and generic ones such as `lim:time`, `mip:gap`, `outlev`. `lim:time` and
+  `mip:gap` are passed on as the subsolver's own keywords where MP2NL knows them (with
+  `outlev=1` the log shows e.g. *subsolver options 'max_cpu_time=60'*).
+- `<subsolver>_options`: the subsolver's own keywords only; an MP keyword there is usually
+  rejected and the solve fails (*NLSolver: call "..." failed*).
+- With a built-in bridge (`mp2nl=1`), MP's `cvt:...` and `sol:chk:...` options go through
+  the AMPL option `mp_options`.
+
+### Choose the subsolver for the class after reformulation
+
+MP reformulates logic with binary variables; `outlev=1` prints the model before and after
+(e.g. *12 variables (0 binary)* becomes *51 variables (4 binary)*). A continuous NLP
+subsolver relaxes those binaries and can report an optimal solution that violates the
+logic; the automatic solution check then warns ("Tolerance violations"), and the violated
+logical constraints can be listed with
+`ampl.get_data("{i in 1.._nlogcons: !_logcon[i].val} _logconname[i]")`. Use an MINLP
+solver for logic; complementarity alone can go to an NLP solver with a smooth
+reformulation:
+
+| `cvt:compl` | reformulation of a ≥ 0, b ≥ 0, a ⟂ b |
+|---|---|
+| 0 | disjunction a ≤ 0 ∨ b ≤ 0 (needs integer variables) |
+| 1 | product a·b = ε |
+| 2 | Fischer-Burmeister √(a²+b²+2ε) = a+b |
+| 3 | min(a, b) = 0 (nonsmooth; a smooth local solver can fail on it) |
+
+ε is `cvt:compl:tol`. Each subsolver configuration sets a default; compare on your model.
+
+### Configurations, files, statuses
+
+- `mp2nl_options='printconfigs'` lists per known subsolver which constructs are
+  linearized for it; `config=<name>` picks one for a binary with another name.
+- `stub=<path>` keeps the reformulated NL file as `<path>.nl`.
+- The status is the subsolver's: a local solver's "optimal" on a nonconvex model is a
+  local optimum, and some subsolvers report a time-limit stop as a failure.
+
+Worked example: https://colab.ampl.com/tags/mp2nl.html.
+
 ## General troubleshooting
+
+**Reading results and comparing runs** — what a status does and does not claim (a local
+"optimal", a `limit` that returned the starting point, an "infeasible" that can be wrong),
+cross-checking bounds against incumbents, and fair benchmarking (validate first, seeds,
+pairing on instances) — is collected in `../benchmarking-and-validation.md`. In a script,
+check `solve_result` after every solve: an unsuccessful solve may not raise an exception.
 
 **Look for a more efficient model first.** Tighten bounds; rescale coefficients; check
 whether a constraint or logical condition is actually needed; try a manual reformulation
@@ -248,7 +322,9 @@ solve;
 
 **Contacting support.** Provide a (possibly reduced) reproduction of the model, the AMPL
 solver version (`<solver> -v`, e.g. `highs -v`) or solver logs (`option <solver>_options
-'version outlev=1 timing=2';`). If the model can't be reduced or shared, provide the raw
+'version outlev=1 timing=2';`). From Python, write the failing case's model and data from
+a **fresh** AMPL session (one in which the solver crashed may not respond):
+`ampl.export_model("repro.mod")`, `ampl.export_data("repro.dat")`. If the model can't be reduced or shared, provide the raw
 NL file instead:
 
 ```ampl
@@ -261,6 +337,9 @@ rather than a lossy one.
 ## See also
 
 - `overview-and-when-to-use.md` — what MP is and which solvers are MP-based
+- `../benchmarking-and-validation.md` — reading solver results and comparing formulations
+  and solvers fairly
+- `../solver-options/mp2nl-options.md` — the MP2NL option list
 - `efficiency-and-numerical-accuracy.md` — the formulation and bounding practices most
   troubleshooting sessions end up applying
 - `feature-and-solver-options-guide.md` — `sol:chk:mode`/`chk:mode` and other solution-check

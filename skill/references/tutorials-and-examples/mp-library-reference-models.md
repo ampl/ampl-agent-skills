@@ -3,7 +3,7 @@
 Derived from: mp-reference-models.md
 
 Source: `raw/mp-reference-models.md` (`https://mp.ampl.com/models.html`), current as of
-2026-08-17. Four small, complete models used as worked examples throughout
+2026-10-28. Four small, complete models used as worked examples throughout
 `../mp-library/` and `../solver-options/` (e.g. to demonstrate `sol:stub`, `alg:sens`,
 `alg:kappa`, `alg:feasrelax`, warm starts, and IIS finding) — kept here as a standalone,
 runnable set rather than repeated inline in every file that references them.
@@ -47,20 +47,24 @@ A/C/B1/B2/NA/CAL): full `.dat` listing in `raw/mp-reference-models.md`.
 
 ## An infeasible model
 
-Small NLP used to demonstrate the Irreducible Inconsistent Subset (IIS) finder
-(`alg:iisfind`, see `../solver-options/`) and unbounded-ray suffixes (`alg:rays`).
+Small linear model used to demonstrate the Irreducible Inconsistent Subset (IIS) finder
+(`alg:iisfind`, see `../mp-library/feature-and-solver-options-guide.md`) and
+unbounded-ray suffixes (`alg:rays`). Constraints `c1`–`c3` are incompatible; `c4` is not
+needed for the infeasibility, so it is not in the IIS.
 
 ```ampl
-var x;
-var y;
-var z;
+var x >= 0;
+var y >= 0;
+var z >= 0;
 
 subj to c1:
-   x+y >= 1;
+   x + y >= 3;
 subj to c2:
-   y + log(z + exp(x+3)) <= 1.83;
+   x + z <= 1;
 subj to c3:
-   z + log(y + 3.8*exp(x+3)) >= -14.265;
+   y + z <= 1;
+subj to c4:            # not needed for the infeasibility
+   x + y + z <= 10;
 ```
 
 ## Another infeasible model

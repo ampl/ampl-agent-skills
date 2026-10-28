@@ -1,6 +1,6 @@
 # Parameters and Expressions
 
-Derived from: ampl-book.md (ch. 7)
+Derived from: ampl-book.md (ch. 7), release-ampl-changelog.md
 
 Source: *AMPL: A Modeling Language for Mathematical Programming*, 2nd ed., Chapter 7.
 
@@ -46,7 +46,9 @@ parentheses, or the subtraction terms fall outside the sum.
 
 Comparisons `= <> < <= > >=` (alt: `== !=`) return true/false. Combine with `and` (`&&`),
 `or` (`||`), `not` (`!`); iterated forms `exists {...} ...` (iterated or) and `forall {...} ...`
-(iterated and):
+(iterated and). An exclusive-or operator `xor` also exists: it was experimental and
+became an official feature in AMPL 20250401 (`release-ampl-changelog.md`; the book
+predates it):
 
 ```ampl
 exists {i in ORIG} demand[i] > 10       # true if any origin has demand > 10

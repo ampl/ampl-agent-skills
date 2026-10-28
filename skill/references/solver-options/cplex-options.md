@@ -5,7 +5,7 @@ Derived from: cplex-mp-options.md, cplex-asl-options.md
 Source: `raw/cplex-mp-options.md` (`https://dev.ampl.com/solvers/cplex/options.html`,
 MP-interface names — the recommended interface) and `raw/cplex-asl-options.md`
 (`https://dev.ampl.com/solvers/cplex/cplexasl.html`, legacy ASL-interface names),
-current as of 2026-08-17. **This is a curated subset of commonly-tuned options** — the
+current as of 2026-10-28. **This is a curated subset of commonly-tuned options** — the
 handful a practitioner actually reaches for, not the full reference; see the raw sources
 or the URLs above for the complete list. Option names below use the MP-interface
 (`cplex_options`) form; the ASL flat names are nearly all just aliases of the same knobs
@@ -21,10 +21,10 @@ solve;
 ```
 
 MP option names take `prefix:name` form (e.g. `mip:gap`); legacy flat aliases (`mipgap`)
-still work and are listed in parentheses in the raw reference. A native CPLEX parameter
-with no MP-standardized name can still be set via `tech:optionnative`, e.g.
-`option cplex_options 'tech:optionnative "NumericFocus 3"';`, and whole CPLEX `.prm`
-parameter files can be read/written with `tech:optionnativeread`/`tech:optionnativewrite`.
+still work and are listed in parentheses in the raw reference. Whole CPLEX `.prm`
+parameter files can be read/written with `tech:optionnativeread`/`tech:optionnativewrite`
+(aliases `tech:param:read`/`tech:param:write`). The CPLEX driver has **no**
+`tech:optionnative` option for single native parameters.
 General mechanics (`(solver)_options` vs. `mp_options`, option files, querying values):
 see `../mp-library/feature-and-solver-options-guide.md`.
 
@@ -122,7 +122,7 @@ these only if the global dial isn't enough and one cut family is a known bottlen
 added relative to the problem's row count.
 
 ```ampl
-option cplex_options 'cuts=2 mir=-1';   # aggressive cuts overall, but disable MIR cuts
+option cplex_options 'cuts=2 mircuts=-1';   # aggressive cuts overall, but disable MIR cuts
 ```
 
 ## Concurrent and algorithm selection
@@ -140,6 +140,17 @@ presolve artifact. `tech:threads` (`threads`) sets the thread count for barrier/
 ```ampl
 option cplex_options 'method=6';   # concurrent optimization for the LP/root relaxation
 ```
+
+## Changes in the October 2026 option list
+
+- **`alg:netfind` values renumbered**: now 1 = extract pure network only, 2 = try
+  reflection scaling (default), 3 = try general scaling (previously 0/1/2).
+- `cut:mfc` corrected to `cut:mcf` (multi-commodity flow cuts; the old name is an alias).
+- New families: `mip:polishafter:*` (absgap, dettime, gap, nodes, sols, time),
+  `alg:feasopt`/`alg:feasoptobj`, sifting (`alg:siftalg`, `alg:siftsimplex`,
+  `lim:siftiter`), pricing (`lp:pricing`, `lp:pgradient`), `mip:start:effort`,
+  `mip:symmetry`, `obj:multi:stats`, `mip:basis:timelimit`/`iterlimit`/`method`.
+- Defaults formerly given as `2^31 - 1` now read "no limit"; many new aliases.
 
 ## See also
 

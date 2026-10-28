@@ -1,6 +1,6 @@
 # Syntax Quick Reference (AMPL Reference Manual Digest)
 
-Derived from: ampl-book.md (Appendix A), basic-scripting.md
+Derived from: ampl-book.md (Appendix A), basic-scripting.md, ampl-suffixes.md
 
 Source: *AMPL: A Modeling Language for Mathematical Programming*, 2nd ed., Appendix A
 ("AMPL Reference Manual"). This file is a compact lookup companion — the narrative
@@ -142,7 +142,7 @@ breakpoints count + 1; breakpoints must be non-decreasing. Two-operand form
 `f(var) - f(expr)` zeroes the result when `var == expr`. Full worked treatment of
 piecewise-linear cost/formulation patterns: `../modeling-patterns/piecewise-linear-programs.md`.
 
-## Suffixes (Tables A-6, A-7, A-8)
+## Suffixes (Tables A-6, A-7, A-8; dev.ampl.com suffix reference)
 
 The narrative version of this material — with worked examples and the ldual/udual sign
 rules — lives in `11-solver-interaction-and-suffixes.md`; this is the exhaustive table.
@@ -154,7 +154,17 @@ rules — lives in `11-solver-interaction-and-suffixes.md`; this is the exhausti
 **Constraints** (Table A-7): `.astatus` `.body` `.dinit` `.dinit0` `.dual` `.lb` `.lbs`
 `.ldual` `.lslack` `.slack` `.sstatus` `.status` `.ub` `.ubs` `.udual` `.uslack`
 
-**Objectives** (Table A-8): `.val`
+**Objectives** (Table A-8): `.val`. The dev.ampl.com suffix reference adds `.astatus`,
+`.exitcode`, `.message` and `.result` (exit code, message and result string from the most
+recent solve with this objective).
+
+**Problems**: `.astatus`, `.exitcode`, `.message`, `.result` (same, per named problem).
+
+**Also listed on dev.ampl.com** (`ampl-suffixes.md`), not in the book's Tables A-6/A-7:
+`.defeqn` on variables (index in `_con` of the "defining constraint" used to substitute the
+variable out) and `.dual` on such variables (dual value of that defining constraint);
+`.defvar` on constraints (index in `_var` of the defined variable the constraint
+substituted out).
 
 **Complementarity constraints** extend this: `.Lsuffix`/`.Rsuffix` address the left/right
 sub-constraint's own suffix; the unadorned name's `.slack` becomes a satisfaction measure

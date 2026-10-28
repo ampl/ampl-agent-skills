@@ -1,6 +1,6 @@
 # Solver Interaction: Presolve, Solve Results, Suffixes, Named Problems
 
-Derived from: ampl-book.md (ch. 14)
+Derived from: ampl-book.md (ch. 14), ampl-suffixes.md
 
 Source: *AMPL: A Modeling Language for Mathematical Programming*, 2nd ed., Chapter 14.
 
@@ -153,6 +153,17 @@ This is a real, documented gotcha: AMPL scans an entire compound statement (`for
 before executing any of it, so a solver-defined suffix that would only be created by a `solve`
 *inside* the loop isn't recognized yet when the loop body is parsed.
 
+**Which custom suffixes does a solver support?** AMPL cannot anticipate them all; they
+depend on each solver's design. Study the solver's options: for example, the Gurobi
+options `obj:multi:options`, `mip:lazy` and `cvt:sos` control how the corresponding
+suffixes are interpreted (`../mp-library/feature-and-solver-options-guide.md` lists the
+suffix-based MP features: lazy constraints, priorities, feasibility-relaxation penalties,
+IIS, sensitivity, multi-objective options).
+
+**Presolve and suffixes.** AMPL presolve can eliminate variables and change constraints,
+which interferes with custom and built-in suffixes. When suffix values matter, switch it
+off with `option presolve 0;`.
+
 Suffix values can also be assigned inline in a `var` declaration:
 ```ampl
 var Use {i in ORIG, j in DEST} binary, suffix priority sum {p in PROD} demand[j,p];
@@ -204,6 +215,9 @@ repeat {
 
 ## See also
 
+- What a status does and does not claim (local optimality, a `limit` returning the
+  starting point), and cross-checking results across solvers:
+  `../benchmarking-and-validation.md`
 - `let`, `fix`/`unfix`, `drop`/`restore` mechanics: `08-commands-modifying-models-and-data.md`
 - Reading duals/reduced costs/slacks day-to-day: `09-display-and-output-commands.md`
 - Scripting constructs (`for`/`repeat`/`if`) used to build alternating-model loops:

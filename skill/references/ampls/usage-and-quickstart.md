@@ -1,6 +1,6 @@
 # ampls: Installation and the Three Usage Levels in Code
 
-Derived from: ampls-quickstart.md, ampls-usage.md
+Derived from: ampls-quickstart.md, ampls-usage.md, release-ampls-changelog.md
 
 Source: `ampls-quickstart.md`, `ampls-usage.md`.
 
@@ -71,6 +71,17 @@ call the solver vendor's own C API directly, exactly as if `ampls` weren't in th
 at all. Reach for this only when a capability isn't exposed by either of the two levels
 above — most everyday tasks (reading solution values, setting common parameters, basic
 callbacks) don't need it.
+
+## Version notes (release changelog)
+
+- **0.2.3 (2026-04-08), breaking:** the method injected into `amplpy.AMPL` was renamed
+  `import_solution` → `import_ampls_solution`. Older examples (including part of the
+  callbacks example page) still show `import_solution`; use the new name.
+- **0.2.4 (2026-05-26):** PyInstaller support, updated packages and solver libraries for
+  all distributed solvers, Python versions above 3.12 supported.
+- Earlier: 0.2.2 updated Gurobi to 12.0; 0.2.1 added the optional `local` argument to
+  CPLEX `addLazy`/`addCut` (locally vs. globally valid, default global); 0.2.0 added
+  `Constraint.to_string` and `AMPLModel.add_constraint` in Python.
 
 ## See also
 

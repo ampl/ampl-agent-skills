@@ -168,6 +168,9 @@ programs, unlike LP. Before committing to an integer formulation on a model of r
 
 ## See also
 
+- Choosing between logical (MP) and hand formulations, declared bounds for big-M,
+  indicators vs. big-M, and known formulations (time-indexed, perspective, convex hull),
+  with measured trade-offs: `choosing-formulations.md`
 - Why `if`/logical conditions on variables can't be used directly in linear constraints,
   and the nonsmoothness that results from trying: `nonlinear-programs.md`
 - Piecewise-linear terms that themselves compile down to an integer-programming

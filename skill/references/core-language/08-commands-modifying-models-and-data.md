@@ -129,6 +129,8 @@ if a solver-side relaxation and AMPL-side relaxation appear to disagree.
 
 ## See also
 
+- Using `fix`/`drop` to evaluate candidate decisions and to solve rolling-horizon
+  windows on one model: `../modeling-patterns/model-as-evaluator-and-heuristics.md`
 - Diagnosing infeasibility, presolve internals, solve results/statuses, suffixes:
   `11-solver-interaction-and-suffixes.md`
 - Output/display commands and formatting options: `09-display-and-output-commands.md`

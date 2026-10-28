@@ -1,6 +1,6 @@
 # Feature and Solver Options Guide for MP-Based Solvers
 
-Derived from: mp-feature-guide.md
+Derived from: mp-feature-guide.md, mp-plateau-stop-theory.md
 
 Source: `mp-feature-guide.md` (`https://mp.ampl.com/features-guide.html`).
 
@@ -19,19 +19,13 @@ advice, to avoid duplicating that content here.
 
 | Feature | Key option(s) |
 |---|---|
-| Time / solution-count limit | `lim:time` (`timelimit`), `lim:soltimelimit` |
-| MIP gap / LP tolerance | `mipgap`, `mipgapabs`, `lp:opttol` |
-| Report final MIP gap | `mip:return_gap` |
-| Continuous-solve method | `alg:method`/`mip:nodemethod` |
-| Crossover after barrier | `crossover`/`bar:basis` |
-| LP basis in/out | `alg:basis`, `mip:basis` |
-| Solving strategy/emphasis | `solutiontarget`, `optimalitytarget`, `heuremphasis`, `mipfocus`/`mipemphasis`, `norelwork` |
-| Numerical emphasis | `presolve`, `numericfocus`/`numericalemphasis`, `scale`, `intfocus`, `refineops` |
-| Feasibility/integrality tolerance | `feastol`, `inttol` |
-| Universal bound for logical-expression variables | `cvt:bigM` (see `efficiency-and-numerical-accuracy.md`) |
-| Piecewise-linear handling | AMPL option `pl_linearize=0` recommended with MP solvers |
-| Multiple solutions | `sol:stub`, `sol:count`, `sol:poollimit` |
-| Multiple objectives | `obj:multi` (see `multi-objective-optimization.md`) |
+| **Limits and gaps** | `lim:time` (`timelimit`); `lim:soltime` (Xpress, COPT: limit once a feasible solution is found); `mip:gap`, `mip:gapabs` (`mipgap`, `mipgapabs`); `mip:return_gap`, `mip:bestbound` report the final gap and dual bound; plateau stop (below) |
+| **Algorithm and search** | `alg:method` (LP/QP and the MIP root relaxation); `mip:nodemethod` (Gurobi, CPLEX, MOSEK); `bar:crossover` (MOSEK `bar:basis`); `tech:threads`, `tech:seed` (compare formulations over several seeds); `alg:start` warm start; `alg:basis`, `mip:basis`; `alg:relax` (relaxes integrality *after* MP's reformulation — unlike AMPL's `relax_integrality`, which relaxes before MP); search emphasis, solver-specific: `mip:focus` (Gurobi; CPLEX `mip:emphasis`), `mip:heuremphasis` (Xpress), `mip:norelheurwork` (Gurobi), `alg:solutiontarget`/`alg:optimalitytarget` (Gurobi; CPLEX `qp:target`) |
+| **Numerics and tolerances** | `alg:feastol`, `mip:inttol`; `lp:opttol` (Gurobi, Xpress, CPLEX); `pre:solve`, `scale`; `alg:numericfocus` (Gurobi, Xpress, CPLEX), `mip:intfocus` (Gurobi), `alg:refineops` (Xpress) — see `efficiency-and-numerical-accuracy.md` |
+| **Reformulation** | `cvt:bigM` (universal bound for variables in logical expressions that have none); `acc:...` (what the solver receives natively) and `cvt:...` (how MP reformulates) — `tools-troubleshooting-and-reformulation.md`; AMPL option `pl_linearize=0` recommended |
+| **Checking and inspecting** | `tech:outlev`, `tech:timing`; automatic solution check `sol:chk:...`; model export `tech:writeprob`, solution export `tech:writesolution` (`writesol`); infeasible models: `iis:find`, `alg:feasrelax` |
+| **Several solutions and objectives** | `sol:stub`, `sol:count`, `sol:poollimit`; `obj:multi` (`multi-objective-optimization.md`), `obj:no` selects one objective |
+| **Options for all MP solvers** | AMPL option `mp_options` (read before `<solver>_options`); `tech:optionfile` |
 | Plateau stop (stall-based MIP termination) | `mip:plateau:time`, `mip:plateau:abstol`, `mip:plateau:reltol`, `mip:plateau:warmup`, `mip:plateau:log`, plus gap-based variants below |
 
 ## How AMPL/MP solver options work
@@ -85,7 +79,7 @@ Query an option's current (default or previously set) value with `?`:
 ```ampl
 option mosek_options 'threads=?';
 solve;
-## MOSEK 10.0.43:   tech:threads = 0
+## MOSEK 11.2.0:   tech:threads = 0
 ```
 
 ### Option files and native options
@@ -133,28 +127,36 @@ AMPL Development.
 ## Support by solvers (condensed)
 
 Legend: ✅ native, ✓ emulated (MP provides the behavior even though the underlying solver
-doesn't), ❌ not supported. *Reconstructed from a fragmented HTML table fetch — cross-check
-any single cell against `https://mp.ampl.com/features-guide.html#support-by-solvers`
-before relying on it for a specific solver decision.*
+doesn't), ❌ not supported. From the page's table as of 2026-10-28.
+For MP2NL, features also depend on the subsolver.
 
-| Feature | Copt | CPLEX | Gurobi | Mosek | Xpress | CBC | GCG | HiGHS | SCIP |
-|---|---|---|---|---|---|---|---|---|---|
-| Feasibility relaxation | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| IIS | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Sensitivity analysis | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Kappa | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Multiple solutions | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ | ✅ |
-| Multiple objectives | ✅ | ✅ | ✅ | ✓ | ✅ | ✓ | ✓ | ✓ | ✓ |
-| Warm start | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Lazy constraints / user cuts | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Return MIP gap | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
-| Return best dual bound | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
-| Plateau stop | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Plateau stop incl. MIP gap progress | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Feature | Copt | CPLEX | Gurobi | Mosek | Xpress | CBC | GCG | HiGHS | SCIP | CPSAT | cuOpt | BaronMP | MP2NL |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Model export | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Solution export | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
+| Report solution time | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Feasibility Relaxation | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Irreducible Inconsistent Subset (IIS) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Input and output basis | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Kappa | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Multiple solutions | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Multiple objectives | ✅ | ✅ | ✅ | ✓ | ✅ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Sensitivity analysis | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Unbounded rays | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Warm start | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Fixed model (return basis for MIP) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Lazy constraints and user cuts | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Return MIP gap | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Return best dual bound | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Variable priorities | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Plateau stop (stall-based MIP termination) | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Plateau stop including MIP gap progress | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
 
-The raw source's full table also covers model/solution export, output basis, unbounded
-rays, fixed-model/basis-for-MIP, and variable priorities per solver — see the live page if
-one of those specifically drives a solver choice.
+Changes since the August 2026 version of this table: solution export added for COPT,
+MOSEK, GCG and SCIP; feasibility relaxation and IIS for HiGHS (IIS also SCIP);
+sensitivity analysis for COPT, CPLEX and HiGHS; warm start for SCIP; fixed model for COPT,
+MOSEK, HiGHS and SCIP (emulated, see below); lazy constraints for COPT; GCG lost input/
+output basis. CP-SAT, cuOpt, BaronMP and MP2NL columns are new.
 
 ## General features
 
@@ -173,12 +175,18 @@ names are standardized across MP solvers per the "consistency" goal in
   constraint/objective names into the export. In AMPL itself, `expand ConName;` shows the
   expanded constraint, and `solexpand;` shows the full AMPL-presolved model as sent to the
   driver (`option presolve 0;` first to see it without AMPL's own presolve applied).
+- **Solution export** (`tech:writesolution`, `writesol`) — write the solution in the
+  solver's own format (e.g. to compare with a run outside AMPL, or attach to a support
+  request); the file extension may select among formats, and the option can be repeated:
+  `option <solver>_options 'writesol=/tmp/diet.sol';`
 - **Report solution time** (`tech:timing`/`tech:reporttimes`) — `0` off (default), `1`
   reports `time`, `time_setup`, `time_solver` suffixes on the problem, `2` adds
   `time_read`, `time_conversion`, `time_output`. `option <solver>_options 'timing=1';`
 - **Warm start** (`alg:start`) — use incoming variable values (and, for LP, dual values) to
   start the algorithm instead of from scratch. `0` no, `1`–`3` yes with varying basis
   interaction (`3` = default: use incoming basis too, if any). Applicability: LP and MIP.
+  When comparing formulations or solvers, give every run the same starting values derived
+  from the data, never from a solve of the same model (`../benchmarking-and-validation.md`).
 - **Input/output basis** (`alg:basis`) — pass/return a simplex basis via `status` suffixes
   on variables and constraints; `3` (default) does both. Re-solving with a sent basis can
   cut solve time to near zero for a marginally changed model.
@@ -234,7 +242,17 @@ names are standardized across MP solvers per the "consistency" goal in
 - **Fixed model / basis for MIP** (`mip:basis`) — after solving a MIP, fix all
   integer/SOS-constrained variables at their optimal values and resolve the continuous
   relaxation to obtain a basis, duals, and (if requested) sensitivity ranges that aren't
-  otherwise available for MIP. `1` on; outputs suffixes `dual`, `sstatus` on variables.
+  otherwise available for MIP. `1` on; outputs constraint dual values and `sstatus` on
+  variables and constraints. COPT, MOSEK, HiGHS and SCIP **emulate** it for linear
+  algebraic models: all integer columns are fixed to an integer-feasible incumbent (not
+  necessarily proven optimal) and a separate continuous model is solved; SOS,
+  piecewise-linear, logical and nonlinear inputs are not supported by the emulation. Duals
+  describe the fixed continuous problem and are **not MIP shadow prices**; basis statuses
+  can differ across solvers. The
+  MIP status, bounds, gaps, pool and statistics are kept; if the fixed solve succeeds the
+  reported primal values are the fixed solution's (continuous variables may move), if not
+  the MIP solution is retained. `mip:basis:timelimit` and `mip:basis:iterlimit` (default
+  -1, solver defaults) limit the supplementary solve; for emulation, 0 skips it.
 - **Plateau stop** (`mip:plateau:time`, `mip:plateau:abstol`, `mip:plateau:reltol`,
   `mip:plateau:warmup`, `mip:plateau:log`) — stop the MIP search once the incumbent has
   stopped improving by at least `abstol` (absolute) or `reltol` (relative) for
@@ -263,6 +281,18 @@ names are standardized across MP solvers per the "consistency" goal in
   out the full time-based `mip:plateau:warmup`. All four options, and the feature itself,
   only apply to solvers that support gap-based plateau stopping (see the support table
   above).
+
+  **How the stopping rule works** (from the MP page "Plateau-based MIP stopping:
+  theoretical description"): the driver keeps a baseline value and the time of the last
+  *qualifying* report. A new incumbent counts as progress only if it beats the baseline by
+  more than `abstol` **or** by more than `reltol` relative to the baseline (with a zero
+  baseline, any nonzero change counts under the relative test); only then do the baseline
+  and the clock move. A report that does not clear the tolerance is absorbed — it neither
+  moves the baseline nor resets the clock, so a stream of tiny improvements cannot keep
+  the search alive. The search stops once the warmup is done and `plateau:time` seconds
+  have passed since the last qualifying report; the rule is checked on each report, not on
+  a separate timer. The gap channel works the same way on the reported MIP gap. (That page
+  uses the alias spellings `mip:plateautime`, `mip:plateauabstol`, …)
 
 ## See also
 

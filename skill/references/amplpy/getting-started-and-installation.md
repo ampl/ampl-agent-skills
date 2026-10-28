@@ -1,8 +1,8 @@
 # amplpy: Installation, Modules, and Environment Setup
 
-Derived from: ampl-modules-for-python.md, amplpy-best-practices.md
+Derived from: ampl-modules-for-python.md, amplpy-best-practices.md, ampl-docker.md
 
-Source: `ampl-modules-for-python.md`, `amplpy-best-practices.md` (Section 1).
+Source: `ampl-modules-for-python.md`, `amplpy-best-practices.md` (Section 1), `ampl-docker.md`.
 
 `amplpy` is this skill's default recommendation for driving AMPL: keep the model in a
 `.mod` file and do everything else — data, options, solving, results — through this API
@@ -14,7 +14,7 @@ otherwise. See "Default recommendations" in `../../SKILL.md`.
 ```bash
 python -m pip install amplpy --upgrade
 python -m amplpy.modules install highs gurobi         # install AMPL + any solvers as Python packages
-python -m amplpy.modules activate <license-uuid>       # e.g. a free https://ampl.com/ce license
+python -m amplpy.modules activate <license-uuid>       # e.g. a free ampl.com/ce or ampl.com/academia license
 python -m amplpy.modules run ampl -vvq                 # verify activation
 ```
 
@@ -88,6 +88,43 @@ ampl = ampl_notebook(
 register notebook magics) specific to the notebook environment; outside a notebook (or if
 you already have a license configured) `AMPL()` alone is equivalent to the non-notebook
 flow above.
+
+## Docker containers
+
+AMPL provides no base image; any image works. Two routes:
+
+**Python images** (simplest): install amplpy and the modules at build time, activate the
+license at run time.
+
+```dockerfile
+FROM python:3.9-slim-bullseye
+RUN python -m pip install amplpy --no-cache-dir
+RUN python -m amplpy.modules install highs gurobi --no-cache-dir
+```
+
+```python
+from amplpy import AMPL, modules
+modules.activate("<license-uuid>")
+ampl = AMPL()
+```
+
+The same image works with a non-root user (add the user and `USER ${USERNAME}`).
+
+**Other images** (e.g. `debian:stable-slim`): download the full bundle
+(`https://ampl.com/dl/amplce/ampl.linux64.tgz`) or individual modules
+(`https://ampl.com/dl/modules/<name>-module.linux64.tgz`, e.g. `ampl`, `gurobi`, `copt`,
+`coin`, `highs`) with `curl` and `tar` into `/opt/`, and add
+`/opt/ampl.linux-intel64/` to `PATH`. Individual modules keep the image small; a
+multi-stage build that copies only `/opt/ampl.linux-intel64` keeps it smaller still.
+
+- **License at run time:** set `AMPLKEY_UUID` to the cloud (or CE) license UUID and run
+  `amplkey activate`, or `amplkey activate --uuid <uuid>`, before starting AMPL.
+- **Non-root users** that cannot write to `/opt/ampl.linux-intel64` need
+  `AMPLKEY_RUNTIME_DIR` (a temporary directory for `amplkey`) and `AMPL_LICFILE` (where
+  the short-term license is stored), e.g. `/tmp/ampl/` and `/tmp/ampl/ampl.lic`.
+
+AMPL offers free deployment support (support@ampl.com) and a support forum
+(https://discuss.ampl.com).
 
 ## Using AMPL solvers from other Python modeling tools
 

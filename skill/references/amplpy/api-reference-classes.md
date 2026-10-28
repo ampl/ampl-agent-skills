@@ -1,6 +1,6 @@
 # amplpy API Reference: AMPL, Entity, Variable, Constraint, Objective, Set, Parameter
 
-Derived from: amplpy-ampl-class.md, amplpy-entity.md, amplpy-variable.md, amplpy-constraint.md, amplpy-objective.md, amplpy-set.md, amplpy-parameter.md
+Derived from: release-amplpy-changelog.md (newer methods), amplpy-ampl-class.md, amplpy-entity.md, amplpy-variable.md, amplpy-constraint.md, amplpy-objective.md, amplpy-set.md, amplpy-parameter.md
 
 Source: `amplpy-ampl-class.md`, `amplpy-entity.md`, `amplpy-variable.md`,
 `amplpy-constraint.md`, `amplpy-objective.md`, `amplpy-set.md`, `amplpy-parameter.md`.
@@ -16,6 +16,7 @@ typically looked up together while reading amplpy code.
 - `Entity`: shared base for Variable/Constraint/Objective/Set/Parameter
 - `Variable`, `Constraint`, `Objective`: suffix-backed result accessors
 - `Set`, `Parameter`: data accessors
+- Newer than the 0.15.0 documentation
 
 ## `AMPL`
 
@@ -162,6 +163,21 @@ before relying on this check to mean "will resolve to a concrete value"), `set(*
 (bulk-assign from a list/dict/DataFrame — equivalent to
 `let {i in indices} par[i] := values[i];`; raises `TypeError` if called on a scalar
 parameter — use `set()` instead for scalars).
+
+## Newer than the 0.15.0 documentation
+
+The class pages this file was built from document amplpy 0.15.0. The release changelog
+lists additions since then (check `amplpy.__version__` before relying on them):
+
+| Version (date) | Addition |
+|---|---|
+| 0.15.1 (2025-06-20) | AMPL option `_throw_on_warnings` controls whether warnings raise exceptions |
+| 0.16.0 (2025-12-08) | type hints; Python 3.14 / 3.14t support |
+| 0.17.0 (2026-06-24) | `AMPL.expand()`, `AMPL.show()`; `Entity.expand()` (instance-level when indexed) |
+| 0.18.0 (2026-07-21) | `AMPL.reset_options()`; `Entity.set_suffix(suffix, value)` (number/string for scalar instances, DataFrame/Series for indexed entities) |
+
+These are listed from the changelog only; their signatures beyond what is shown here are
+not in the raw corpus yet.
 
 ## See also
 
