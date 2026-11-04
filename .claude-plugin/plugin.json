@@ -1,7 +1,7 @@
 {
   "name": "ampl",
   "displayName": "AMPL",
-  "version": "2.0.2",
+  "version": "3.0.1",
   "description": "AMPL modeling knowledge: write, debug, and explain AMPL models (.mod/.dat/.run), amplpy and ampls code, solver options, and LP/MIP/NLP formulation patterns.",
   "author": {
     "name": "AMPL Optimization Inc.",
