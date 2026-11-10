@@ -2,7 +2,7 @@
 name: ampl-skill
 description: Use this skill for ANY task involving AMPL (A Mathematical Programming Language) — writing, reading, fixing, or explaining .mod/.dat/.run files; formulating or reformulating optimization models (LP, MIP, NLP, piecewise-linear, network, complementarity); working with amplpy (the Python API) or ampls (the low-level solver-callback API); debugging AMPL syntax errors, infeasible/unbounded solves, nonlinear solver failures, or unexpected results; choosing between AMPL modeling patterns; or answering "how do I express X in AMPL" questions. Trigger this skill whenever AMPL, amplpy, or ampls is mentioned, whenever a .mod/.dat/.run file is involved, or whenever the user is formulating a mathematical program and AMPL is a plausible implementation target — even if they don't name AMPL explicitly but describe sets/parameters/variables/constraints in an optimization context.
 ---
-v3.0.1
+v3.0.2
 # AMPL Modeling Language
 
 ## What this skill covers
@@ -67,6 +67,13 @@ to be used in practice, not just what's technically possible:
   default. Unless the user specifies a different language (or is clearly already working
   in one), write and suggest Python/`amplpy` code rather than pure AMPL scripts or
   another language's API — see `references/amplpy/`.
+- **Give every `AMPL()` instance an explicit owner and deterministic cleanup.** Each
+  instance starts a separate AMPL process. Code that creates or receives ownership of an
+  instance must close it in `finally` (or in an application-provided context manager that
+  guarantees the same behavior); do not rely on garbage collection. A helper that merely
+  borrows an instance must not close it. This is especially important in notebooks,
+  graders, services, retries, and batch/validation loops — see
+  `references/amplpy/core-workflow-best-practices.md`.
 - **For solver choice**, see `references/core-language/13-solver-selection-guide.md` for
   a quick problem-class → solver lookup (LP/MIP, QP, conic, non-convex, MINLP, general
   NLP, global optimization, GPU-accelerated).
@@ -142,7 +149,7 @@ to be used in practice, not just what's technically possible:
 | File | Use when |
 |---|---|
 | `getting-started-and-installation.md` | Installing amplpy/solvers, licensing, Colab/Jupyter setup, Docker containers |
-| `core-workflow-best-practices.md` | Loading models/data, solving and checking the status, retrieving/exporting results, error/warning handling, iterative algorithms — everyday scripting |
+| `core-workflow-best-practices.md` | Resource ownership and deterministic process cleanup; loading models/data; solving and checking status; retrieving/exporting results; error/warning handling; iterative algorithms — everyday scripting |
 | `api-reference-classes.md` | Method-by-method reference for `AMPL`, `Entity`, `Variable`, `Constraint`, `Objective`, `Set`, `Parameter`; methods added in amplpy 0.15.1–0.18.0 |
 
 ### `references/ampls/` — low-level solver-callback API (advanced)

@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.2] - 2026-11-10
+
+### Added
+- amplpy resource-lifecycle guidance: every `AMPL()` instance has an explicit owner and
+  deterministic `close()` path; borrowed instances are not closed by callees.
+- Patterns for `try`/`finally`, owner objects, application-provided scopes such as
+  `server.ampl_scope()`, and cleanup tests covering success, exceptions, and repeated
+  execution returning the external-process count to baseline.
+
+### Changed
+- Elevated process cleanup to a default recommendation in `SKILL.md` so agents see it
+  before generating amplpy code; corrected cross-language teardown guidance to avoid
+  relying on Python garbage collection.
+
 ## [3.0.1] - 2026-10-28
 
 ### Fixed

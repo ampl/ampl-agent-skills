@@ -30,7 +30,7 @@ docs before relying on them verbatim.
 | Solve | `solve;` | `ampl.solve()` | `ampl$solve()` | `ampl.Solve();` | `ampl.solve();` |
 | Run arbitrary AMPL statements | (native) | `ampl.eval("model;")` / `ampl.eval("data;")` | `ampl$eval("model;")` | `ampl.Eval("model;");` | `ampl.eval("model;");` |
 | Reset session | `reset;` | `ampl.reset()` or `ampl.eval("reset;")` | `ampl$reset()` or `ampl$eval("reset;")` | `ampl.Reset();` | `ampl.reset();` |
-| Terminate session | `quit;` / `q;` | (invalidates the object — avoid sending `quit`/`exit` via API; let the API's own cleanup handle it) | same caveat | same caveat | same caveat |
+| Terminate session | `quit;` / `q;` | Call `ampl.close()` from the owner's cleanup path; do not send `quit`/`exit` via `eval()` | Avoid terminating commands through `eval()`; follow the current rAMPL lifecycle API | Avoid terminating commands through `Eval()`; follow the current C# lifecycle API | Avoid terminating commands through `eval()`; follow the current Java lifecycle API |
 
 Note the Python method-naming convention: `snake_case` (`set_option`, `read_data`) in
 current `amplpy`; some older example code in the wild uses `camelCase` (`setOption`,
@@ -39,9 +39,10 @@ current `amplpy`; some older example code in the wild uses `camelCase` (`setOpti
 
 **Important — terminating commands and the API**: sending `quit;`/`exit;`/`q;` through an
 API's `eval()` invalidates the underlying AMPL object, after which it can't accept further
-input. The API's own object-lifecycle cleanup (e.g. Python's garbage collection of the
-`AMPL` instance, or an explicit `.close()`) already handles session teardown correctly —
-don't send terminating commands proactively from API code.
+input. Use the API's explicit lifecycle operation instead. In Python, the creator owns
+the instance and must call `ampl.close()` from `finally`; garbage collection is not a
+deterministic cleanup strategy. Don't send terminating commands proactively from API
+code. See `../amplpy/core-workflow-best-practices.md` for the full ownership pattern.
 
 **Reloading model/data via the API**: whenever replacing a previously-loaded model or
 data file through the API (as opposed to a fresh interactive session), explicitly call one

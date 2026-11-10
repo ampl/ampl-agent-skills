@@ -33,16 +33,19 @@ import the solution back into the `amplpy` session for post-processing:
 
 ```python
 ampl = AMPL()
-ampl.read("models/queens.mod")
-ampl.param["size"] = 10
+try:
+    ampl.read("models/queens.mod")
+    ampl.param["size"] = 10
 
-model = ampl.to_ampls(SOLVER)          # export: amplpy -> ampls
-cb = Callback()
-model.set_callback(cb)
-model.optimize()
+    model = ampl.to_ampls(SOLVER)          # export: amplpy -> ampls
+    cb = Callback()
+    model.set_callback(cb)
+    model.optimize()
 
-ampl.import_ampls_solution(model)      # import: ampls -> amplpy
-assert model.get_obj() == ampl.get_current_objective().value()
+    ampl.import_ampls_solution(model)      # import: ampls -> amplpy
+    assert model.get_obj() == ampl.get_current_objective().value()
+finally:
+    ampl.close()
 ```
 
 The `assert` at the end — checking that `ampls`'s and `amplpy`'s view of the objective

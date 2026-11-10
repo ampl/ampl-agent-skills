@@ -27,6 +27,11 @@ from amplpy import AMPL
 ampl = AMPL(environment=None)     # environment: custom AMPL binary location / env vars
 ```
 
+Each instance owns an external AMPL process. The creator must call `close()` in a
+`finally` block (or transfer ownership to a wrapper/scope that guarantees cleanup); do
+not rely on garbage collection. See `core-workflow-best-practices.md` for the ownership
+pattern and cleanup tests.
+
 **Loading model/data:**
 
 | Method | Purpose |

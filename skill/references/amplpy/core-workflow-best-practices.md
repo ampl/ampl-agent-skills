@@ -7,6 +7,7 @@ Source: `amplpy-best-practices.md` (Sections 2-11).
 
 ## Table of contents
 
+- Owning and closing AMPL sessions
 - Loading a model: file vs. inline string
 - Loading data: Python-native structures, DataFrames, external sources, `.dat` files
 - Modifying data on an already-loaded model
@@ -17,6 +18,73 @@ Source: `amplpy-best-practices.md` (Sections 2-11).
 - Batch-solving multiple models/solvers
 - A sensitivity-analysis pattern
 - Iterative algorithms: one model, many solves
+
+## Owning and closing AMPL sessions
+
+**Treat every `AMPL()` instance as an owned external process, not an ordinary disposable
+Python object.** Constructing an instance starts a separate AMPL process. The code that
+creates the instance owns it unless ownership is explicitly transferred; that owner must
+close it deterministically. Do not rely on reference counting or garbage collection to
+release it, especially in a notebook, service, grader, test runner, or other long-running
+Python process.
+
+Use `try`/`finally` around the full lifetime of the instance:
+
+```python
+from amplpy import AMPL
+
+ampl = AMPL()
+try:
+    ampl.read("model.mod")
+    ampl.solve(solver="highs")
+    solution = ampl.get_solution()
+finally:
+    ampl.close()
+```
+
+Keep ownership visible in APIs. A function that receives a borrowed `AMPL` object uses
+it but does not close it; a factory or wrapper that creates one must either return clear
+ownership to the caller or retain and close it itself. An owner object is useful when a
+workflow needs the session across several method calls:
+
+```python
+class ModelRunner:
+    def __init__(self):
+        self.ampl = AMPL()
+
+    def close(self):
+        self.ampl.close()
+
+runner = ModelRunner()
+try:
+    run_checks(runner)
+finally:
+    runner.close()
+```
+
+For application factories such as `server.new_ampl()`, prefer one shared scope that
+registers every instance created during the operation and closes all of them on exit,
+including when a check raises:
+
+```python
+for case in cases:
+    with server.ampl_scope():
+        grade_case(case)
+```
+
+`ampl_scope()` in this example is an application-provided context manager, not an
+amplpy API. Until such a scope exists, put every creation behind `try`/`finally`. Reuse
+one instance with `reset()` when the model structure permits; do not repeatedly create
+instances merely to clear model or data state.
+
+**Test the cleanup contract, not just the result.** Cover normal return and exception
+paths, then repeat the operation and verify the external `ampl`/`ampl.exe` process count
+returns to its pre-test baseline. Unit tests can inject a fake factory and assert that
+every created instance receives exactly one `close()` call; retain a process-count test
+as a platform-aware integration test because unrelated AMPL sessions may be running.
+Forced process termination cannot execute Python `finally` blocks, so a worker-based
+system should also make its parent/supervisor responsible for reaping abandoned child
+processes.
 
 ## Loading a model
 

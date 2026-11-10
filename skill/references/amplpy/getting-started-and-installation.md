@@ -23,6 +23,12 @@ from amplpy import AMPL
 ampl = AMPL()          # instantiate; finds installed modules/license automatically
 ```
 
+Each call starts an external AMPL process. The code that creates `ampl` owns it and must
+call `ampl.close()` in `finally` when the session is no longer needed; the short setup
+snippets in this page show construction only. Do not rely on garbage collection, and
+apply the same rule to the instance returned by `ampl_notebook(...)`. See
+`core-workflow-best-practices.md` for complete lifetime and testing patterns.
+
 If you already have a separate AMPL installation (standalone, AMPL IDE), `amplpy` locates
 its license and solvers automatically — no extra configuration needed. If you specifically
 want to make sure the pip-installed modules (not the other installation) are used:
